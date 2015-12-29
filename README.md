@@ -14,3 +14,23 @@ Intended Use-Case
 -----------------
 socketServerMq was designed to intergrate into the rest of the SuperLimitBreak live performance tool-chain,
 but is generic enough to be useful as a stand-alone websocket messaging system.
+
+Json API
+--------
+The way you can send messages on the MQ is to interface with the server via the json API over the socket stream.
+
+###Example Json
+To send a json object to the key foobar you would send:
+```json
+{
+    "action": "message",
+    "data": [
+        {
+            "deviceId": "foobar",
+            "someOtherData": [
+                "interesting", "data"
+            ]
+        }
+    ]
+}
+```
