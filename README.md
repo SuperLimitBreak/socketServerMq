@@ -7,7 +7,7 @@ A light-weight, performant websocket server supporting N-many subscribable messa
 
 ###What is it
 * socketServerMq is a wrapper for [channelMq](https://github.com/SuperLimitBreak/channelMq)
-* socketServerMq exposes channelMq's API via a JSON schema over eiter a tcp or websocket connection.
+* socketServerMq exposes channelMq's API via a JSON schema over either a tcp or websocket connection.
 
 
 Intended Use-Case
@@ -17,7 +17,7 @@ but is generic enough to be useful as a stand-alone websocket messaging system.
 
 Json API
 --------
-The way you can send messages on the MQ is to interface with the server via the json API over the socket stream.
+Interaction with the MQ is performed via the json API, over the socket stream.
 
 ###Example Json
 To send a json object to the key foobar you would send:
