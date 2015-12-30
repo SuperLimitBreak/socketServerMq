@@ -42,8 +42,9 @@ func (g GenericMessage) Messages() ([]Message, error) {
 		return rtn, err
 	}
 
-	for _, elm := range msgs {
-		rtn = append(rtn, Message{elm})
+	for i, _ := range msgs {
+		m := Message{msgs[i]}
+		rtn = append(rtn, m)
 	}
 	return rtn, err
 }

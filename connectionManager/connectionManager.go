@@ -54,17 +54,18 @@ func (c *ConnectionManager) manage(conn connectionTypes.Connection) {
 				log.WithError(err).Error("Failed to get messages")
 			}
 
-			for _, msg := range messages {
+			for i, msg := range messages {
 				key, err := msg.Key()
 				if err != nil {
 					log.WithError(err).Error("Failed to get key")
 					continue
 				}
 
+				d := *messages[i].Data
 				if key == nil {
-					c.mq.Send(*msg.Data, []string{})
+					c.mq.Send(d, []string{})
 				} else {
-					c.mq.Send(*msg.Data, []string{*key})
+					c.mq.Send(d, []string{*key})
 				}
 			}
 

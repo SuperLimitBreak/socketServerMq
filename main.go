@@ -4,9 +4,12 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/SuperLimitBreak/channelMq"
 	"github.com/SuperLimitBreak/socketServerMq/connectionManager"
+	tSockConn "github.com/SuperLimitBreak/socketServerMq/connectionTypes/tcpSocket"
 	wSockConn "github.com/SuperLimitBreak/socketServerMq/connectionTypes/websocket"
 	"github.com/gorilla/websocket"
+	"net"
 	"net/http"
+	"sync"
 )
 
 var upgrader websocket.Upgrader
@@ -32,14 +35,52 @@ func init() {
 }
 
 func main() {
-	startWs()
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	go startWs(wg)
+	go startTs(wg)
+
+	wg.Wait()
 }
 
-func startWs() {
+func startTs(wg *sync.WaitGroup) {
+	log.Info("Starting tcpSocket server...")
+
+	ln, err := net.Listen("tcp", ":9872")
+	if err != nil {
+		log.WithError(err).Fatal("Failed to start TCP server")
+	}
+
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			log.WithError(err).Fatal("TCP accept loop failed")
+		}
+
+		go serveTs(conn)
+	}
+
+	wg.Done()
+}
+
+func serveTs(conn net.Conn) {
+	tsc := tSockConn.NewTcpSocketConn(conn)
+	connMan.AddConnection(tsc)
+	tsc.Start()
+}
+
+func startWs(wg *sync.WaitGroup) {
 	http.HandleFunc("/ws", serveWs)
 
 	log.Info("Starting Websocket server...")
-	http.ListenAndServe("localhost:6543", nil)
+
+	err := http.ListenAndServe(":9873", nil)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to serve websockets")
+	}
+
+	wg.Done()
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {

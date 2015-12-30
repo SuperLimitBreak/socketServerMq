@@ -97,6 +97,7 @@ func (c *WebsocketConn) ingress() {
 			c.ws.SetReadDeadline(time.Now().Add(pongWait))
 			_, message, err := c.ws.ReadMessage()
 			if err != nil {
+				log.WithError(err).Error("failed to read from websocket")
 				c.Close()
 				close(c.ingressChan)
 				return
@@ -125,8 +126,18 @@ func (c *WebsocketConn) egress() {
 	}
 }
 
-func (c *WebsocketConn) Close() error {
+func (c *WebsocketConn) closeStop() {
+	defer func() {
+		if r := recover(); r != nil {
+			// here to prevent close on closed chan race panic
+		}
+	}()
+
 	close(c.stop)
+}
+
+func (c *WebsocketConn) Close() error {
+	c.closeStop()
 
 	c.write(websocket.CloseMessage, []byte{})
 	return c.ws.Close()
