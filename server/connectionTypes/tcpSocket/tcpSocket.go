@@ -33,17 +33,8 @@ func (c *TcpSocketConn) GetEgressChan() chan []byte {
 	return c.egressChan
 }
 
-func (c *TcpSocketConn) SetIngressChan(ic chan []byte) {
-	c.ingressChan = ic
-	c.stop <- struct{}{}
-}
-
-func (c *TcpSocketConn) SetEgressChan(ec chan []byte) {
-	c.egressChan = ec
-	c.stop <- struct{}{}
-}
-
 func (c *TcpSocketConn) Start() {
+	log.Debug("starting ingress/egress worker")
 	go c.ingress()
 	go c.egress()
 }
@@ -51,22 +42,24 @@ func (c *TcpSocketConn) Start() {
 func (c *TcpSocketConn) ingress() {
 	for {
 		select {
-		case _, ok := <-c.stop:
-			if !ok {
-				close(c.ingressChan)
-				return
-			}
+		case <-c.stop:
+			log.Debug("ingress loop stop")
+			close(c.ingressChan)
+			return
 
 		default:
 			message, err := bufio.NewReader(c.conn).ReadBytes('\n')
 			if err != nil {
 				log.WithError(err).Error("failed to read from tcp socket")
 				c.Close()
+
 				close(c.ingressChan)
 				return
 			}
 
+			log.Debug("Send message to ingressChan")
 			c.ingressChan <- message
+
 		}
 	}
 }
@@ -74,15 +67,14 @@ func (c *TcpSocketConn) ingress() {
 func (c *TcpSocketConn) egress() {
 	for {
 		select {
-		case _, ok := <-c.stop:
-			if !ok {
-				return
-			}
+		case <-c.stop:
+			return
 
 		case msg := <-c.egressChan:
 			str := string(msg)
 
-			n, err := fmt.Fprint(c.conn, str)
+			n, err := fmt.Fprintf(c.conn, str+"\n")
+
 			if (err != nil) || (n < len(str)) {
 				log.WithError(err).WithFields(log.Fields{
 					"length":  len(str),

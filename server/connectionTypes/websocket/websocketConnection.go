@@ -49,25 +49,14 @@ func (c *WebsocketConn) GetEgressChan() chan []byte {
 	return c.egressChan
 }
 
-func (c *WebsocketConn) SetIngressChan(ic chan []byte) {
-	c.ingressChan = ic
-	c.stop <- struct{}{}
-}
-
-func (c *WebsocketConn) SetEgressChan(ec chan []byte) {
-	c.egressChan = ec
-	c.stop <- struct{}{}
-}
-
 func (c *WebsocketConn) pingLoop() {
 	ticker := time.NewTicker(pingPeriod)
 
 	for {
 		select {
-		case _, ok := <-c.stop:
-			if !ok {
-				return
-			}
+		case <-c.stop:
+			return
+
 		case <-ticker.C:
 			c.write(websocket.PingMessage, []byte{})
 		}
@@ -87,11 +76,9 @@ func (c *WebsocketConn) write(mt int, payload []byte) error {
 func (c *WebsocketConn) ingress() {
 	for {
 		select {
-		case _, ok := <-c.stop:
-			if !ok {
-				close(c.ingressChan)
-				return
-			}
+		case <-c.stop:
+			close(c.ingressChan)
+			return
 
 		default:
 			c.ws.SetReadDeadline(time.Now().Add(pongWait))
@@ -111,10 +98,8 @@ func (c *WebsocketConn) ingress() {
 func (c *WebsocketConn) egress() {
 	for {
 		select {
-		case _, ok := <-c.stop:
-			if !ok {
-				return
-			}
+		case <-c.stop:
+			return
 
 		case msg := <-c.egressChan:
 			if err := c.write(websocket.TextMessage, msg); err != nil {

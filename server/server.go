@@ -17,11 +17,11 @@ var mq *channelMq.MQ
 var connMan *connectionManager.ConnectionManager
 
 func init() {
-	log.Info("Initializing channelMq")
+	log.SetLevel(log.DebugLevel)
+
 	mq = channelMq.NewMQ()
 	mq.EmptyKeyGets(channelMq.ALL_MESSAGES)
 
-	log.Info("Initializing websocket upgrader")
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -30,7 +30,6 @@ func init() {
 		},
 	}
 
-	log.Info("Initializing connectionManager")
 	connMan = connectionManager.NewConnectionManager(mq)
 }
 
@@ -45,7 +44,7 @@ func StartAll() {
 }
 
 func startTs(wg *sync.WaitGroup) {
-	log.Info("Starting tcpSocket server...")
+	log.Info("Starting tcpSocket server")
 
 	ln, err := net.Listen("tcp", ":9872")
 	if err != nil {
@@ -65,6 +64,8 @@ func startTs(wg *sync.WaitGroup) {
 }
 
 func serveTs(conn net.Conn) {
+	log.Debug("New tcp connection")
+
 	tsc := tSockConn.NewTcpSocketConn(conn)
 	connMan.AddConnection(tsc)
 	tsc.Start()
@@ -73,7 +74,7 @@ func serveTs(conn net.Conn) {
 func startWs(wg *sync.WaitGroup) {
 	http.HandleFunc("/ws", serveWs)
 
-	log.Info("Starting Websocket server...")
+	log.Info("Starting Websocket server")
 
 	err := http.ListenAndServe(":9873", nil)
 	if err != nil {
@@ -84,13 +85,15 @@ func startWs(wg *sync.WaitGroup) {
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	log.Info("New Websocket Request")
+	log.Debug("New Websocket Request")
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.WithError(err).Error("Failed to upgrade HTTP handler")
 		return
 	}
+
+	log.Debug("New websocket connection (upgrade ok)")
 
 	wsc := wSockConn.NewWebsocketConn(ws)
 	connMan.AddConnection(wsc)

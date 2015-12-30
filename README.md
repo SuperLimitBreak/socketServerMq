@@ -26,7 +26,7 @@ To send a json object to the key foobar you would send:
     "action": "message",
     "data": [
         {
-            "deviceId": "foobar",
+            "deviceid": "foobar",
             "someOtherData": [
                 "interesting", "data"
             ]

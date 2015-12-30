@@ -65,7 +65,7 @@ func (m Message) Key() (*string, error) {
 		return nil, err
 	}
 
-	devId, ok := partial["deviceId"]
+	devId, ok := partial["deviceid"]
 	if !ok {
 		return nil, nil
 	}
@@ -77,4 +77,14 @@ func (m Message) Key() (*string, error) {
 	}
 
 	return &key, nil
+}
+
+func WrapWithTopLevelMessage(msg []byte) []byte {
+	front := []byte(`{"action":"message","data":[`)
+	end := []byte(`]}`)
+
+	rtn := append(front, msg...)
+	rtn = append(rtn, end...)
+
+	return rtn
 }
