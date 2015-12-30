@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
 	"github.com/SuperLimitBreak/channelMq"
-	"github.com/SuperLimitBreak/socketServerMq/connectionTypes"
-	"github.com/SuperLimitBreak/socketServerMq/schema"
+	"github.com/SuperLimitBreak/socketServerMq/server/connectionTypes"
+	"github.com/SuperLimitBreak/socketServerMq/server/schema"
 )
 
 func NewConnectionManager(mq *channelMq.MQ) *ConnectionManager {
